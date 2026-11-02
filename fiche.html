@@ -47,10 +47,12 @@ dt{ color:var(--ink-soft); font-size:13px; text-transform:uppercase; letter-spac
 dd{ margin:0; font-size:16px; font-weight:600; overflow-wrap:anywhere; }
 .due-late{ color:var(--red); }
 .due-late::after{ content:" ●"; }
+dd a{ color:var(--navy); }
 .desc{ white-space:pre-wrap; font-size:15px; line-height:1.45; margin:0; }
 
 .empty{ color:var(--ink-soft); font-style:italic; }
-.app-footer{ max-width:640px; margin:0 auto; padding:14px 16px 30px; border-top:1px solid var(--line); text-align:center; font-size:12px; color:var(--ink-soft); }
+.app-footer{ max-width:640px; margin:0 auto; padding:14px 16px 30px; border-top:1px solid var(--line); text-align:center; font-size:12.5px; letter-spacing:0.2px; color:var(--ink-soft); }
+.app-footer .footer-name{ color:var(--navy); font-weight:600; letter-spacing:0.4px; }
 
 @media (max-width:420px){
     header h1{ display:none; }
@@ -76,7 +78,7 @@ dd{ margin:0; font-size:16px; font-weight:600; overflow-wrap:anywhere; }
 <div class="container" id="content"></div>
 
 <footer class="app-footer">
-    <span data-i18n="footer">swisspor · Laboratoire</span>
+    <span class="footer-name">Benjamin Rime</span> — Version 1.2
 </footer>
 
 <script>
@@ -87,21 +89,23 @@ dd{ margin:0; font-size:16px; font-weight:600; overflow-wrap:anywhere; }
    le téléphone. Clés (cf. etiquettes_qr_essais.html) :
    v version · l langue d'origine · e essai · t type · s échantillon
    ph phase (code, ou « x: » + texte libre) · p projet · r responsable
-   m matériau · due échéance · d date · desc description
+   m matériau · ps site de production · pd date de production
+   lb laboratoire / destination · ct personne de contact
+   due échéance · d date · desc description
    ===================================================== */
 const I18N = {
     fr:{ app_title:"Fiche échantillon", footer:"swisspor · Laboratoire", test:"Essai", sample:"Échantillon",
-         details:"Détails", project:"Projet", resp:"Responsable", mat:"Matériau", due:"Échéance", date:"Date de création",
+         details:"Détails", project:"Projet", resp:"Responsable", mat:"Matériau", site:"Site de production", prodDate:"Date de production", lab:"Laboratoire / destination", contact:"Contact", due:"Échéance", date:"Date de création",
          desc:"Description du projet", overdue:"échéance dépassée",
          none:"Aucune donnée : scannez le QR code d'une étiquette swisspor pour afficher sa fiche.",
          phases:{before:"avant", during:"pendant", after:"après", detail:"détail", failure:"rupture"}, phase:"Phase" },
     de:{ app_title:"Probenblatt", footer:"swisspor · Labor", test:"Versuch", sample:"Probe",
-         details:"Details", project:"Projekt", resp:"Verantwortlich", mat:"Material", due:"Fällig am", date:"Erstellt am",
+         details:"Details", project:"Projekt", resp:"Verantwortlich", mat:"Material", site:"Produktionsstandort", prodDate:"Produktionsdatum", lab:"Labor / Bestimmungsort", contact:"Kontakt", due:"Fällig am", date:"Erstellt am",
          desc:"Projektbeschreibung", overdue:"überfällig",
          none:"Keine Daten: Scannen Sie den QR-Code eines swisspor-Etiketts, um das Probenblatt anzuzeigen.",
          phases:{before:"vorher", during:"während", after:"nachher", detail:"Detail", failure:"Bruch"}, phase:"Phase" },
     en:{ app_title:"Sample sheet", footer:"swisspor · Laboratory", test:"Test", sample:"Sample",
-         details:"Details", project:"Project", resp:"Responsible", mat:"Material", due:"Due date", date:"Created on",
+         details:"Details", project:"Project", resp:"Responsible", mat:"Material", site:"Production site", prodDate:"Production date", lab:"Test lab / destination", contact:"Contact", due:"Due date", date:"Created on",
          desc:"Project description", overdue:"overdue",
          none:"No data: scan the QR code of a swisspor label to display its sheet.",
          phases:{before:"before", during:"during", after:"after", detail:"detail", failure:"failure"}, phase:"Phase" }
@@ -122,6 +126,11 @@ function fmtDate(iso){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(iso || "")) return iso || "";
     const [y,m,d] = iso.split("-");
     return lang === "en" ? `${d}/${m}/${y}` : `${d}.${m}.${y}`;
+}
+function linkify(text){
+    return esc(text)
+        .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, m => `<a href="mailto:${m}">${m}</a>`)
+        .replace(/\+?\d[\d\s./-]{7,}\d/g, m => `<a href="tel:${m.replace(/[^\d+]/g, "")}">${m}</a>`);
 }
 function phaseText(code){
     if(!code) return "";
@@ -151,6 +160,10 @@ function render(){
     const rows = [
         [T.resp, data.r],
         [T.mat, data.m],
+        [T.site, data.ps],
+        [T.prodDate, fmtDate(data.pd)],
+        [T.lab, data.lb],
+        [T.contact, data.ct ? linkify(data.ct) : "", true],
         [T.due, data.due ? `<span class="${late ? "due-late" : ""}" title="${late ? T.overdue : ""}">${fmtDate(data.due)}</span>` : "", true],
         [T.project, data.p],
         [T.date, fmtDate(data.d)]
