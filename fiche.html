@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#182B49">
+<title>swisspor – Fiche échantillon</title>
+
+<style>
+:root{
+    --navy:#182B49; --red:#E2001A; --amber:#F5A800;
+    --ink:#1d1d1d; --ink-soft:#666666; --paper:#f4f4f2; --line:#dcdcdc;
+}
+*{ box-sizing:border-box; }
+body{ font-family:"Segoe UI",Arial,Helvetica,sans-serif; margin:0; background:var(--paper); color:var(--ink); }
+
+header{ background:white; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:14px; border-bottom:1px solid var(--line); }
+.brand{ display:flex; flex-direction:column; gap:5px; }
+.brand-mark{ font-weight:800; font-size:25px; letter-spacing:-0.3px; color:var(--navy); line-height:1; }
+.brand-dots{ display:flex; gap:6px; }
+.brand-dots span{ width:8px; height:8px; border-radius:50%; display:block; }
+.brand-dots span:nth-child(1){ background:var(--navy); }
+.brand-dots span:nth-child(2){ background:var(--amber); }
+.brand-dots span:nth-child(3){ background:var(--red); }
+header h1{ margin:0; font-size:12px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:var(--ink-soft); padding-bottom:3px; border-bottom:2px solid var(--navy); flex:1; }
+
+/* Langue : boutons en haut à droite, faciles à toucher sur téléphone */
+.lang-switch{ display:flex; border:1px solid var(--navy); border-radius:999px; overflow:hidden; flex-shrink:0; }
+.lang-switch button{ background:white; color:var(--navy); border:0; padding:7px 11px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+.lang-switch button.active{ background:var(--navy); color:white; }
+
+.container{ max-width:640px; margin:0 auto; padding:16px; }
+.card{ background:white; padding:18px; border-radius:6px; border:1px solid var(--line); box-shadow:0 1px 3px rgba(0,0,0,0.04); margin-bottom:16px; }
+.card h2{ margin:0 0 12px; padding-bottom:10px; border-bottom:2px solid var(--navy); font-size:17px; }
+
+.hero{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.hero .id{ font-size:28px; font-weight:800; color:var(--navy); letter-spacing:-0.3px; }
+.hero .sample{ font-size:18px; font-weight:700; color:var(--ink-soft); }
+.badges{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.badge{ display:inline-block; padding:5px 12px; border-radius:999px; font-size:13px; font-weight:600; }
+.badge.type{ background:var(--navy); color:white; }
+.badge.phase{ border:1px solid var(--navy); color:var(--navy); }
+
+dl{ margin:0; display:grid; grid-template-columns:auto 1fr; gap:10px 16px; }
+dt{ color:var(--ink-soft); font-size:13px; text-transform:uppercase; letter-spacing:0.4px; padding-top:2px; }
+dd{ margin:0; font-size:16px; font-weight:600; overflow-wrap:anywhere; }
+.due-late{ color:var(--red); }
+.due-late::after{ content:" ●"; }
+.desc{ white-space:pre-wrap; font-size:15px; line-height:1.45; margin:0; }
+
+.empty{ color:var(--ink-soft); font-style:italic; }
+.app-footer{ max-width:640px; margin:0 auto; padding:14px 16px 30px; border-top:1px solid var(--line); text-align:center; font-size:12px; color:var(--ink-soft); }
+
+@media (max-width:420px){
+    header h1{ display:none; }
+    dl{ grid-template-columns:1fr; gap:2px; }
+    dd{ margin-bottom:10px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="brand">
+        <span class="brand-mark">swisspor</span>
+        <span class="brand-dots"><span></span><span></span><span></span></span>
+    </div>
+    <h1 data-i18n="app_title">Fiche échantillon</h1>
+    <div class="lang-switch" id="langSwitch">
+        <button data-lang="fr">FR</button><button data-lang="de">DE</button><button data-lang="en">EN</button>
+    </div>
+</header>
+
+<div class="container" id="content"></div>
+
+<footer class="app-footer">
+    <span data-i18n="footer">swisspor · Laboratoire</span>
+</footer>
+
+<script>
+/* =====================================================
+   Fiche affichée au scan du QR d'une étiquette.
+   Les données sont dans la partie après « # » de l'adresse :
+   elle n'est jamais envoyée au serveur, tout est lu ici dans
+   le téléphone. Clés (cf. etiquettes_qr_essais.html) :
+   v version · l langue d'origine · e essai · t type · s échantillon
+   ph phase (code, ou « x: » + texte libre) · p projet · r responsable
+   m matériau · due échéance · d date · desc description
+   ===================================================== */
+const I18N = {
+    fr:{ app_title:"Fiche échantillon", footer:"swisspor · Laboratoire", test:"Essai", sample:"Échantillon",
+         details:"Détails", project:"Projet", resp:"Responsable", mat:"Matériau", due:"Échéance", date:"Date de création",
+         desc:"Description du projet", overdue:"échéance dépassée",
+         none:"Aucune donnée : scannez le QR code d'une étiquette swisspor pour afficher sa fiche.",
+         phases:{before:"avant", during:"pendant", after:"après", detail:"détail", failure:"rupture"}, phase:"Phase" },
+    de:{ app_title:"Probenblatt", footer:"swisspor · Labor", test:"Versuch", sample:"Probe",
+         details:"Details", project:"Projekt", resp:"Verantwortlich", mat:"Material", due:"Fällig am", date:"Erstellt am",
+         desc:"Projektbeschreibung", overdue:"überfällig",
+         none:"Keine Daten: Scannen Sie den QR-Code eines swisspor-Etiketts, um das Probenblatt anzuzeigen.",
+         phases:{before:"vorher", during:"während", after:"nachher", detail:"Detail", failure:"Bruch"}, phase:"Phase" },
+    en:{ app_title:"Sample sheet", footer:"swisspor · Laboratory", test:"Test", sample:"Sample",
+         details:"Details", project:"Project", resp:"Responsible", mat:"Material", due:"Due date", date:"Created on",
+         desc:"Project description", overdue:"overdue",
+         none:"No data: scan the QR code of a swisspor label to display its sheet.",
+         phases:{before:"before", during:"during", after:"after", detail:"detail", failure:"failure"}, phase:"Phase" }
+};
+
+const data = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+
+// Langue : choix mémorisé du lecteur > langue de l'étiquette > langue du téléphone > FR
+let lang = (() => {
+    try{ const saved = localStorage.getItem("ficheLanguage"); if(I18N[saved]) return saved; }catch(e){}
+    if(I18N[data.l]) return data.l;
+    const nav = (navigator.language || "").slice(0,2);
+    return I18N[nav] ? nav : "fr";
+})();
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function fmtDate(iso){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(iso || "")) return iso || "";
+    const [y,m,d] = iso.split("-");
+    return lang === "en" ? `${d}/${m}/${y}` : `${d}.${m}.${y}`;
+}
+function phaseText(code){
+    if(!code) return "";
+    if(code.startsWith("x:")) return code.slice(2);
+    return I18N[lang].phases[code] || code;
+}
+
+function render(){
+    const T = I18N[lang];
+    document.documentElement.lang = lang;
+    document.title = "swisspor – " + T.app_title;
+    document.querySelectorAll("[data-i18n]").forEach(el => el.textContent = T[el.dataset.i18n]);
+    document.querySelectorAll("#langSwitch button").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
+
+    if(!data.e){
+        document.getElementById("content").innerHTML = `<div class="card"><p class="empty">${T.none}</p></div>`;
+        return;
+    }
+    const sample = data.s ? String(data.s).padStart(2, "0") : "";
+    const badges = [
+        data.t ? `<span class="badge type">${esc(data.t)}</span>` : "",
+        data.ph ? `<span class="badge phase">${T.phase}${lang === "fr" ? " :" : ":"} ${esc(phaseText(data.ph))}</span>` : ""
+    ].join("");
+
+    const today = new Date().toISOString().slice(0,10);
+    const late = data.due && data.due < today;
+    const rows = [
+        [T.resp, data.r],
+        [T.mat, data.m],
+        [T.due, data.due ? `<span class="${late ? "due-late" : ""}" title="${late ? T.overdue : ""}">${fmtDate(data.due)}</span>` : "", true],
+        [T.project, data.p],
+        [T.date, fmtDate(data.d)]
+    ].filter(r => r[1]);
+
+    document.getElementById("content").innerHTML = `
+        <div class="card">
+            <div class="hero">
+                <span class="id">${T.test} ${esc(data.e)}</span>
+                ${sample ? `<span class="sample">/ ${T.sample} ${esc(sample)}</span>` : ""}
+            </div>
+            ${badges ? `<div class="badges">${badges}</div>` : ""}
+        </div>
+        <div class="card">
+            <h2>${T.details}</h2>
+            <dl>${rows.map(([k,v,raw]) => `<dt>${k}</dt><dd>${raw ? v : esc(v)}</dd>`).join("")}</dl>
+        </div>
+        ${data.desc ? `<div class="card"><h2>${T.desc}</h2><p class="desc">${esc(data.desc)}</p></div>` : ""}`;
+}
+
+document.querySelectorAll("#langSwitch button").forEach(b => b.onclick = () => {
+    lang = b.dataset.lang;
+    try{ localStorage.setItem("ficheLanguage", lang); }catch(e){}
+    render();
+});
+render();
+</script>
+</body>
+</html>
